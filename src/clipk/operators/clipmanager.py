@@ -50,12 +50,17 @@ class Clip:
 
     @classmethod
     def add_clip(cls, clip_obj: "Clip") -> str:
+        """ add a new clip return unique id of clip via unique_id"""
         unique_id = clip_obj.get_unique_id()
+
+        if unique_id in cls.all_clips: # fail sfe to catch dublicate cliped items 
+            return unique_id
+        
         if not isinstance(clip_obj, Clip):
             raise TypeError
 
         if cls.CLIP_COUNT >= cls.MAX_CLIPS:
-            del cls.all_clips[1]
+            del cls.all_clips[0]
             cls.CLIP_COUNT = len(cls.all_clips)
 
         if cls.CLIP_COUNT < cls.MAX_CLIPS:
@@ -66,6 +71,7 @@ class Clip:
     
     @classmethod
     def remove_clip(cls, unique_id: str) -> str:
+        """ remove a given clip with a unique id"""
         try:
             cls.all_clips.remove(unique_id)
             cls.CLIP_COUNT -= 1
@@ -110,6 +116,7 @@ class AudioClip(Clip):
         self.clip_name = f"[AUDIO]{self.clip_path}"
 
 class VideoClip(Clip):
+    """specific class to video clips"""
     def __init__(self, clip_data: str, clip_type: str = "video", 
                  clip_path: Path | str | None = None, 
                  date_clipped: datetime | None = None, 
@@ -117,4 +124,3 @@ class VideoClip(Clip):
         super().__init__(clip_data, clip_type,clip_path, date_clipped, is_pinned)
 
         self.clip_name = f"[VIDEO]{self.clip_path}"
-
