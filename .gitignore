@@ -3,3 +3,5 @@
 *.db
 .data/
 .database/
+.pyc
+__pycache__/
