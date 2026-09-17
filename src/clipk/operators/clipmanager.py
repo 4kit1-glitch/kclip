@@ -66,6 +66,7 @@ class TextClip(Clip):
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
         self.clip_name = self.clip_data[:15]
+        self.clip_type = "text"
 
 class ImageClip(Clip):
     """specific class to imageclips"""
@@ -76,8 +77,20 @@ class ImageClip(Clip):
                  is_pinned: bool = False) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
-        self.clip_name = f"[IMG]{clip_path}"
+        self.clip_name = f"[IMG]{self.clip_path}"
         self.clip_type = "img"
 
 class AudioClip(Clip):
     """specific class to audio clips"""
+    def __init__(self, clip_data: str, clip_type: str = "text", clip_path: Path | str | None = None, date_clipped: datetime | None = None, is_pinned: bool = False) -> None:
+        super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
+
+        self.clip_name = f"[AUDIO]{self.clip_path}"
+        self.clip_type = "audio"
+
+class VideoClip(Clip):
+    def __init__(self, clip_data: str, clip_type: str = "text", clip_path: Path | str | None = None, date_clipped: datetime | None = None, is_pinned: bool = False) -> None:
+        super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
+
+        self.clip_name = f"[VIDEO]{self.clip_path}"
+        self.clip_type = "video"
