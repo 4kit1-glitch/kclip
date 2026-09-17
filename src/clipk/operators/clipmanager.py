@@ -16,7 +16,7 @@ class Clip:
     ALLOWED_TYPES = ("text", "img", "video", "audio")
     MAX_CLIPS: ClassVar[int] = 10
     CLIP_COUNT: ClassVar[int] = 0
-    all_clips = ClassVar[list[str]]
+    all_clips : ClassVar[list[str]] = []
     def __init__(self, clip_data: str, clip_type: str = "text",
                 clip_path: Path | str | None = None,
                 date_clipped: datetime | None = None,
