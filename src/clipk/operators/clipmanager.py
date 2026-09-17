@@ -1,9 +1,10 @@
 import os
 import sys
-from datetime import datetime
 import hashlib
-from pathlib import Path
 import pyperclip
+from datetime import datetime
+from typing import ClassVar
+from pathlib import Path
 from PIL import ImageGrab
 
 
@@ -13,9 +14,9 @@ PROGRAM_PATH = __file__
 class Clip:
     """ clip class specifies behaviors and attribute of a clipped item """
     ALLOWED_TYPES = ("text", "img", "video", "audio")
-    MAX_CLIPS = 10
-    CLIP_COUNT = 0
-    all_clips = []
+    MAX_CLIPS: ClassVar[int] = 10
+    CLIP_COUNT: ClassVar[int] = 0
+    all_clips = ClassVar[list[str]]
     def __init__(self, clip_data: str, clip_type: str = "text",
                 clip_path: Path | str | None = None,
                 date_clipped: datetime | None = None,
@@ -48,7 +49,7 @@ class Clip:
         return f"{id_hash[:3]}{TYPE_MAP[self.clip_type]}{id_hash[1]}"
 
     @classmethod
-    def add_clip(cls, clip_obj: "Clip"):
+    def add_clip(cls, clip_obj: "Clip") -> str:
         unique_id = clip_obj.get_unique_id()
         if not isinstance(clip_obj, Clip):
             raise TypeError
@@ -61,6 +62,8 @@ class Clip:
             cls.all_clips.append(clip_obj.get_unique_id())
             cls.CLIP_COUNT += 1
 
+        return unique_id
+    
     @classmethod
     def remove_clip(cls, unique_id: str) -> str:
         try:
