@@ -3,8 +3,8 @@ import sys
 from datetime import datetime
 import hashlib
 from pathlib import Path
-
 import pyperclip
+from PIL import ImageGrab
 
 
 
@@ -12,9 +12,9 @@ PROGRAM_PATH = __file__
 
 class Clip:
     """ clip class specifies behaviors and attribute of a clipped item """
-    ALLOWED_TYPES = ("text", "img", "video")
-
+    ALLOWED_TYPES = ("text", "img", "video", "audio")
     MAX_CLIPS = 10
+    CLIP_COUNT = 10
 
     def __init__(self, clip_data: str, clip_type: str = "text",
                 clip_path: Path | str | None = None,
@@ -39,7 +39,7 @@ class Clip:
     
     def get_unique_id(self) -> str:
         """generate unique id from data"""
-        TYPE_MAP = {"text": "t", "img":"i", "video":"v"}
+        TYPE_MAP = {"text": "t", "img":"i", "video":"v", "audio": ""}
         try:
             id_bytes = self.clip_data.encode()
             id_hash = str(int(hashlib.sha256(id_bytes).hexdigest(), 16))  # hash and convert the hash string to into str(numbers)
@@ -49,16 +49,35 @@ class Clip:
 
         return f"{id_hash[:3]}{TYPE_MAP[self.clip_type]}{id_hash[1]}"
 
+    @classmethod
+    def add_clip(cls):
+        pass
 
-
+    @classmethod
+    def remove_clip(cls):
+        pass
 
 class TextClip(Clip):
+    """ specific class to text clips """
     def __init__(self, clip_data: str, clip_type: str = "text",
                  clip_path: Path | str | None = None, 
                  date_clipped: datetime | None = None, 
                  is_pinned: bool = False) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
-    def get_clip_name(self):
-        pass
+        self.clip_name = self.clip_data[:15]
 
+class ImageClip(Clip):
+    """specific class to imageclips"""
+
+    def __init__(self, clip_data: str, clip_type: str = "text", 
+                 clip_path: Path | str | None = None, 
+                 date_clipped: datetime | None = None, 
+                 is_pinned: bool = False) -> None:
+        super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
+
+        self.clip_name = f"[IMG]{clip_path}"
+        self.clip_type = "img"
+
+class AudioClip(Clip):
+    """specific class to audio clips"""
