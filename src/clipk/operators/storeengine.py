@@ -47,6 +47,7 @@ def get_connection():
         _conn = sqlite3.connect(get_db_path())
         _conn.execute("PRAGMA journal_mode=WAL") # this ensures the database doesnt crash on simultanuous reads
         atexit.register(close_db)
+        _conn.row_factory = sqlite3.Row
     return _conn
 
         
@@ -83,10 +84,42 @@ def add_record(unique_name: str, clip_path: Path, is_pinned: bool) -> None:
     )
     conn.commit()
 
-def delete_record(clip_id: int):
 
-    pass
+def read_record(clip_id: int| None = None, unique_name: str | None = None) -> dict | None:
+    """ reads a specific record from database provided with either the clip_id or
+        unique_name
+    """
+    conn = get_connection()
+    if clip_id is not None:
+        result = conn.execute(" SELECT * FROM clips WHERE clipID = ?", (clip_id,))
+    elif unique_name is not None:
+        result = conn.execute(" SELECT * FROM clips WHERE uniqueName = ?", (unique_name,))
+    else:
+        result = None
+
+    if result is not None:
+        return dict(result.fetchone())
+    return result
+
+
+            
+        
+def delete_record(clip_id: int) -> dict | None:
+    """ removes a record form database , returns the deleted record as dict """
+    conn = get_connection()
+
+    record = read_record(clip_id)
+    if record is None:
+        return None
     
+    conn.execute(
+        "DELETE FROM clips where clipID = ?", (clip_id,)
+    )
+    conn.commit()
+
+    return record
+
+
 
 def add_clip_to_db(clip: Clip):
     # calls add record on the clip
@@ -96,12 +129,6 @@ def add_clip_to_db(clip: Clip):
 def remove_clip_from_db():
     # calls delete record
     pass
-
-def read_data(clip_id: int, unique_name: str) -> tuple:
-    #goes to data base and reads a specific info 
-    # tries and closes databasse after the read
-    pass
-
 
 
 
