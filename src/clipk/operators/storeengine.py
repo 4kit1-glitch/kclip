@@ -65,8 +65,9 @@ def create_db() -> None:
         CREATE TABLE IF NOT EXISTS clips (
             clipID INTEGER PRIMARY KEY AUTOINCREMENT,
             uniqueName TEXT NOT NULL,
-            clipPath TEXT, 
-            isPinned INTEGER NOT NULL, 
+            clipType TEXT NOT NULL,
+            clipPath TEXT,
+            isPinned INTEGER NOT NULL,
             dateClipped TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
     """)
@@ -98,7 +99,7 @@ def read_record(clip_id: int| None = None, unique_name: str | None = None) -> di
         return None
 
     record = result.fetchone()
-    
+
     if record is None:
         return None
 
