@@ -13,6 +13,7 @@ APP_NAME = "kclip"
 DATABASE_NAME = "kclip.db"
 
 _conn = None
+_initialized = False
 
 
         
@@ -51,54 +52,36 @@ def get_connection():
         
 
 def create_dir(path: Path):
-    try: 
-        path.mkdir(parents=True, exist_ok=True)
-    except (OSError, PermissionError):
-        print(f"[ERROR] failed to create {path}", file=sys.stderr)
+    path.mkdir(parents=True, exist_ok=True)
     
 
-def create_db(db_path: Path) -> None:
-    """ creates the kclip database in a provided path """
-    conn = None
-    try:
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
+def create_db() -> None:
+    """ creates the kclip database """
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS clips (
-                clipID INTEGER PRIMARY KEY AUTOINCREMENT,
-                uniqueName TEXT NOT NULL,
-                clipPath TEXT, 
-                isPinned INTEGER NOT NULL, 
-                dateClipped TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    conn = get_connection()
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS clips (
+            clipID INTEGER PRIMARY KEY AUTOINCREMENT,
+            uniqueName TEXT NOT NULL,
+            clipPath TEXT, 
+            isPinned INTEGER NOT NULL, 
+            dateClipped TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        conn.commit()
-    except sqlite3.Error as e:
-        print(f"Database Error: {e}")
-        sys.exit(1)
+    """)
 
-def add_record(db_path: Path, unique_name: str, clip_path: Path, is_pinned: bool) -> int:
-    """ adds a record to a database returns 0 for success and 1 for operation error"""
-    conn = None
-    try:
-        pinstatus = 1 if is_pinned else 0
 
-        conn = sqlite3.connect(db_path)
-        cur = conn.cursor()
+def add_record(unique_name: str, clip_path: Path, is_pinned: bool) -> None:
+    """ adds a record to database """
+    pinstatus = 1 if is_pinned else 0
 
-        cur.execute("INSERT INTO clips (uniqueName, clipPath, isPinned) VALUES (?, ?, ?)", \
-                    (unique_name, str(clip_path), pinstatus))
+    conn = get_connection()
 
-        conn.commit()
-        return 0
-    except sqlite3.OperationalError:
-        print("failed to add record to database", file=sys.stderr)
-        return 1
-    finally:
-        if conn:
-            conn.close()
-    
+    conn.execute(
+        "INSERT INTO clips (uniqueName, clipPath, isPinned) VALUES (?, ?, ?)", 
+        (unique_name, str(clip_path), pinstatus)
+    )
+    conn.commit()
 
 def delete_record(clip_id: int):
 
