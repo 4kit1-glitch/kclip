@@ -95,11 +95,14 @@ def read_record(clip_id: int| None = None, unique_name: str | None = None) -> di
     elif unique_name is not None:
         result = conn.execute(" SELECT * FROM clips WHERE uniqueName = ?", (unique_name,))
     else:
-        result = None
+        return None
 
-    if result is not None:
-        return dict(result.fetchone())
-    return result
+    record = result.fetchone()
+    
+    if record is None:
+        return None
+
+    return dict(record)
 
 
             
