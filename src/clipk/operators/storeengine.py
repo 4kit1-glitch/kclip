@@ -2,8 +2,6 @@ import os
 import sys
 import atexit
 import sqlite3
-import pyperclip
-from PIL import ImageGrab
 from pathlib import Path
 from clipmanager import Clip, TextClip, AudioClip, ImageClip, VideoClip
 
@@ -46,8 +44,9 @@ def get_connection():
     if _conn is None:
         _conn = sqlite3.connect(get_db_path())
         _conn.execute("PRAGMA journal_mode=WAL") # this ensures the database doesnt crash on simultanuous reads
-        atexit.register(close_db)
         _conn.row_factory = sqlite3.Row
+        atexit.register(close_db)
+       
     return _conn
 
         
@@ -72,16 +71,30 @@ def create_db() -> None:
             )
     """)
 
+def delete_db() -> None:
+    """ deletes kclip database """
+    db_path = get_db_path()
+    try:
+        close_db()
+    except sqlite3.Error:
+        print("[error] failed to close database", file=sys.stderr)
+    finally:
+        db_path.unlink(missing_ok=True)
+        db_path.with_suffix(".db-wal").unlink(missing_ok=True)
+        db_path.with_suffix(".db-shm").unlink(missing_ok=True)
 
-def add_record(unique_name: str, clip_path: Path, is_pinned: bool) -> None:
+
+
+def add_record(unique_name: str, clip_type: str, is_pinned: bool ,clip_path: Path | str | None = None) -> None:
     """ adds a record to database """
     pinstatus = 1 if is_pinned else 0
+    path_value = str(clip_path) if clip_path is not None else None
 
     conn = get_connection()
 
     conn.execute(
-        "INSERT INTO clips (uniqueName, clipPath, isPinned) VALUES (?, ?, ?)", 
-        (unique_name, str(clip_path), pinstatus)
+        "INSERT INTO clips (uniqueName, clipType, clipPath, isPinned) VALUES (?, ?, ?, ?)", 
+        (unique_name, clip_type, path_value, pinstatus)
     )
     conn.commit()
 
@@ -125,34 +138,35 @@ def delete_record(clip_id: int) -> dict | None:
 
 
 
-def add_clip_to_db(clip: Clip):
-    # calls add record on the clip
-    pass
+def add_clip_to_db(clip: Clip | TextClip | AudioClip | ImageClip | VideoClip) -> None:
+    """ adds a clip object to the database"""
+    add_record(
+        clip.get_unique_id(), 
+        clip.clip_type, 
+        clip.is_pinned, 
+        clip.clip_path
+    )
 
 
-def remove_clip_from_db():
-    # calls delete record
-    pass
+def remove_clip_from_db(clip_id: int):
+    """ removes a clip object """
+    delete_record(clip_id)
 
 
+def init() -> bool:
+    """ runs proper proceedings to setup database"""
+    global _initialized
+    if _initialized:
+        return True
 
-
-## working with actual data\
-def save_data():
-    # function saves the data to data location 
-    # correctly parses the type of data and performs its path and performs move
-    # or dow
-
-    pass
-def save_from_imagegrap():
-    """ perform saving of file gotten from PIL.ImageGrap"""
-
-def delete_file():
-    pass
-def move_file():
-    pass
-
-def download():
-    pass
-
-print(get_data_dir(), get_db_path())
+    try:
+        create_dir(get_data_dir())
+        create_dir(get_db_dir())
+        create_db()
+        _initialized = True
+        return True
+    except (sqlite3.Error, OSError, PermissionError) as e:
+        print(f"[Error] failed to initialize : {e}")
+        _initialized = False
+        return False
+    
