@@ -1,11 +1,15 @@
-import os
+"""
+    Manager module for kclip
+        - contains clip class
+        - contains specific class type subclasses
+        - contains other general functions
+    
+"""
 import sys
 import hashlib
-import pyperclip
 from datetime import datetime
 from typing import ClassVar
 from pathlib import Path
-from PIL import ImageGrab
 
 
 
