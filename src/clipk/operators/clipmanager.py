@@ -19,7 +19,7 @@ PROGRAM_PATH = __file__
 class Clip:
     """clip class specifies behaviors and attribute of a clipped item"""
 
-    ALLOWED_TYPES = ("text", "img", "video", "audio")
+    ALLOWED_TYPES = ("text", "img", "video", "audio", "other")
     MAX_CLIPS: ClassVar[int] = 10
     CLIP_COUNT: ClassVar[int] = 0
     all_clips: ClassVar[list[str]] = []
@@ -48,7 +48,7 @@ class Clip:
 
     def get_unique_id(self) -> str:
         """generate unique id from data"""
-        TYPE_MAP = {"text": "t", "img": "i", "video": "v", "audio": "a"}
+        TYPE_MAP = {"text": "t", "img": "i", "video": "v", "audio": "a", "other": "o"}
         try:
             id_bytes = self.clip_data.encode()
             id_hash = str(
@@ -156,3 +156,8 @@ class VideoClip(Clip):
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
         self.clip_name = f"[VIDEO]{self.clip_path}"
+
+class OtherClip(Clip):
+    def __init__(self, clip_data: str, clip_type: str = "other", clip_path: Path | str | None = None, date_clipped: datetime | None = None, is_pinned: bool = False) -> None:
+        super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
+        self.clip_name = f"[OTHER]{self.clip_path}"
