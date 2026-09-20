@@ -209,10 +209,27 @@ def save_as_text(path: Path) -> str | None:
         return str(path)
 
 
-def read_from_from_image_grap() -> Any:
-    location = ImageGrab.grabclipboard()
-    return location
+def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
+    data_type = "img"
+    dest_dir = get_store_path(data_type)
+    identity = generate_new_file_name(Path("web_clip.png"))
+    
+    if dest_dir:
+        dest_path = dest_dir / identity
+    else:
+        return None
+    
+    try:
+        create_dir(dest_dir)
+        pil_image.save(dest_path)
+    except OSError:
+        return None
+    
+    return dest_path
 
+
+def read_from_image_grap():
+    return ImageGrab.grabclipboard()
 
 def read_from_pyperclip() -> str:
     """returns output of paste() from pyperclip"""
@@ -220,10 +237,10 @@ def read_from_pyperclip() -> str:
 
 
 def read_clipboard():
-    if read_from_from_image_grap() is None:
+    if read_from_image_grap() is None:
         print("p\n", read_from_pyperclip())
         return
-    print("I\n", read_from_from_image_grap())
+    print("I\n", read_from_image_grap())
 
 
 read_clipboard()
