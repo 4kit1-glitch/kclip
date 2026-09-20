@@ -185,18 +185,12 @@ def copy_file(path: Path) -> Path | None:
     path_type = get_file_type(path_str)
 
     return perform_copy(path, size, path_type)
+
+def save_as_text(path: Path) -> str | None:
+    # fall back to text if copy failed and others failed
+    if not copy_file(path):
+        return str(path)
         
-    
-
-
-    
-
-
-def download_file():
-    pass
-
-def save_as_text():
-    pass
 
 
 def read_from_from_image_grap() -> Any:
