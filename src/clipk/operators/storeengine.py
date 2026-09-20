@@ -1,3 +1,15 @@
+"""
+    Storage engine module for kclip
+    contains functions to:
+        - manipulate database
+        - create nessesary dirs
+        - add remove modify a clip
+        - open and close connections
+        - initialize connection
+
+"""
+
+
 import os
 import sys
 import atexit
@@ -166,7 +178,7 @@ def init() -> bool:
         _initialized = True
         return True
     except (sqlite3.Error, OSError, PermissionError) as e:
-        print(f"[Error] failed to initialize : {e}")
+        print(f"[Error] failed to initialize : {e}", file=sys.stderr)
         _initialized = False
         return False
     
