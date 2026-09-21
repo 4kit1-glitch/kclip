@@ -12,11 +12,9 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 from shutil import copy2
-from pyperclip import copy, paste
-from PIL import ImageGrab, Image
-from typing import Any
+from PIL import Image
 
-from storeengine import APP_NAME, get_data_dir, create_dir
+from storeengine import get_data_dir, create_dir
 
 
 VIDEO_EXTS = {".mp4", ".mkv", ".gif", ".mov", ".avi", ".webm"}
@@ -27,6 +25,11 @@ MAX_COPY_SIZE = 100 * (1024**2)  # sets max copy size to 100Mb
 
 
 def get_store_path(clip_type: str) -> Path | None:
+    """returns the absolut storage path for a specified clip type
+    - returns a Path by default
+    - returns None if type doesnt have a path
+    - returns None if type is a text
+    """
     data_dir = get_data_dir()
     match clip_type.lower():
         case "text":
@@ -50,28 +53,36 @@ def _get_ext(string: str) -> str:
 
 # test groups
 def is_vid(item: str) -> bool:
+    """true if copied item is a video , doesnt handle all"""
     return _get_ext(item) in VIDEO_EXTS
 
 
 def is_audio(item: str) -> bool:
+    """true if copied item is a audio , doesnt handle all"""
     return _get_ext(item) in AUDIO_EXTS
 
 
 def is_img(item: str) -> bool:
+    """true if copied item is a image, doesnt handle all"""
     return _get_ext(item) in IMAGE_EXTS
 
 
 def is_text(item: str) -> bool:
+    """true if copied item is a text , doesnt handle all"""
     return _get_ext(item) == ""
 
 
 def is_other(item: str) -> bool:
-    return not is_audio(item) or is_img(item) or is_text(item) or is_vid(item)
+    """true if it is neither a vid, audio, text or image"""
+    return not (is_audio(item) or is_img(item) or is_text(item) or is_vid(item))
 
 
 # path checkers
 def is_path(item: str) -> bool:
-    """checks if what is clipped is a path"""
+    """checks if what is clipped is a path
+    doesnt resolve ~ and glob patterns
+
+    """
     path = Path(item)
     return path.exists()
 
@@ -102,7 +113,7 @@ def is_absolute(path: Path | str) -> bool:
 
 def is_safe_to_copy(path_str: str) -> bool:
     """ensures that what is to be copied and moved is safe"""
-    return is_path(path_str) and not is_mount_point(path_str)
+    return is_file(path_str) and not is_mount_point(path_str)
 
 
 # file movement functions
@@ -213,34 +224,16 @@ def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
     data_type = "img"
     dest_dir = get_store_path(data_type)
     identity = generate_new_file_name(Path("web_clip.png"))
-    
+
     if dest_dir:
         dest_path = dest_dir / identity
     else:
         return None
-    
+
     try:
         create_dir(dest_dir)
         pil_image.save(dest_path)
     except OSError:
         return None
-    
+
     return dest_path
-
-
-def read_from_image_grap():
-    return ImageGrab.grabclipboard()
-
-def read_from_pyperclip() -> str:
-    """returns output of paste() from pyperclip"""
-    return paste()
-
-
-def read_clipboard():
-    if read_from_image_grap() is None:
-        print("p\n", read_from_pyperclip())
-        return
-    print("I\n", read_from_image_grap())
-
-
-read_clipboard()
