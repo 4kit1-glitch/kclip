@@ -13,7 +13,6 @@ from typing import ClassVar
 from pathlib import Path
 from pyperclip import copy, paste
 from PIL import ImageGrab, Image
-from typing import Any
 
 
 

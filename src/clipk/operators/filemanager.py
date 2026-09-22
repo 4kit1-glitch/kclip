@@ -26,6 +26,8 @@ AUDIO_EXTS = {".wav", ".m4a", ".mp3", ".aac"}
 
 MAX_COPY_SIZE = 100 * (1024**2)  # sets max copy size to 100Mb
 
+_most_recent_copy_path: Path | None = None
+
 
 def get_store_path(clip_type: str) -> Path | None:
     """returns the absolut storage path for a specified clip type
@@ -166,7 +168,7 @@ def perform_copy(path: Path, path_bytes: int, identity_name: str, path_type: str
     dest -> destination btw
 
     """
-
+    global _most_recent_copy_path
     # first i get destination folder
     dest_dir = get_store_path(path_type)
 
@@ -185,8 +187,11 @@ def perform_copy(path: Path, path_bytes: int, identity_name: str, path_type: str
     # then i perform copy
     try:
         copy2(path, dest_path)
+        _most_recent_copy_path = dest_path
     except (FileNotFoundError, OSError):
         return None
+
+    
 
     return dest_path
 
@@ -197,7 +202,7 @@ def async_copy(path: Path, path_bytes: int, identity_name: str, path_type: str):
 
 
 
-def copy_file(path: Path) -> Path | None:
+def copy_file(path: Path, clip_obj: Clip) -> Path | None:
     """
     copies a file from its path to kclip store path
     does copy on files less than 101mb
@@ -220,7 +225,7 @@ def copy_file(path: Path) -> Path | None:
         return None
 
     path_type = get_file_type(path_str)
-    identity_name = generate_new_file_name(path)
+    identity_name = generate_new_file_name2(path, clip_obj)
 
     # copies in bacground
     async_copy(path, size, identity_name,path_type)
@@ -232,9 +237,9 @@ def copy_file(path: Path) -> Path | None:
     
     return None 
 
-def save_as_text(path: Path) -> str | None:
+def save_as_text(path: Path, clip_obj: Clip) -> str | None:
     # fall back to text if copy failed and others failed
-    if not copy_file(path):
+    if not copy_file(path, clip_obj):
         return str(path)
 
 
@@ -242,7 +247,7 @@ def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
     data_type = "img"
     dest_dir = get_store_path(data_type)
     identity = generate_new_file_name(Path("web_clip.png"))
-
+    global _most_recent_copy_path
     if dest_dir:
         dest_path = dest_dir / identity
     else:
@@ -251,9 +256,16 @@ def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
     try:
         create_dir(dest_dir)
         pil_image.save(dest_path)
+        _most_recent_copy_path = dest_path
     except OSError:
         return None
-
+    
     return dest_path
 
 
+def delete_file(clip_obj: Clip) ->  None:
+    path = clip_obj.clip_path
+
+    if isinstance(path, (str | Path)):
+        Path(path).unlink(missing_ok=True)
+    Clip.remove_clip(clip_obj.get_unique_id())
