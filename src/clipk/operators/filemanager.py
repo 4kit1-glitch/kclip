@@ -15,7 +15,9 @@ from shutil import copy2
 from PIL import Image
 
 from storeengine import get_data_dir, create_dir
-from clipmanager import Clip
+from clipmanager import Clip, TextClip, AudioClip, VideoClip, ImageClip, OtherClip
+from _bg_sync import run_in_background
+
 
 
 VIDEO_EXTS = {".mp4", ".mkv", ".gif", ".mov", ".avi", ".webm"}
@@ -146,18 +148,17 @@ def generate_new_file_name(path: Path) -> str:
     """generate file names for moved files"""
     extension = _get_ext(str(path))
     timestamp = datetime.now().astimezone().strftime("%Y%m%d_%H_%M_%S")
-    short_hash = hashlib.md5(str(path).encode()).hexdigest()[
-        :8
-    ]  # generate 8 chr filename
+    short_hash = hashlib.md5(str(path).encode()).hexdigest()[:8]  # generate 8 chr filename
     return f"{timestamp}_{short_hash}{extension}"
 
-def generate_new_file_name2(path: Path, clip: Clip) -> str:
+def generate_new_file_name2(path: Path, clip: Clip | TextClip | AudioClip | VideoClip | ImageClip | OtherClip) -> str:
     """ generates unique name for files so it matches with clip"""
     extension = _get_ext(str(path))
     unique_name = clip.get_unique_id()
     return f"{unique_name}{extension}"
 
-def perform_copy(path: Path, path_bytes: int, path_type: str = "other") -> Path | None:
+
+def perform_copy(path: Path, path_bytes: int, identity_name: str, path_type: str = "other") -> Path | None:
     """
     actual copy proceedings return the destination path
     returns none if no copy was performed
@@ -175,9 +176,6 @@ def perform_copy(path: Path, path_bytes: int, path_type: str = "other") -> Path 
     else:
         return None
 
-    # generate identity name
-    identity_name = generate_new_file_name(path)
-
     # i get destination filepath
     dest_path = dest_dir / identity_name
 
@@ -191,6 +189,12 @@ def perform_copy(path: Path, path_bytes: int, path_type: str = "other") -> Path 
         return None
 
     return dest_path
+
+
+@run_in_background
+def async_copy(path: Path, path_bytes: int, identity_name: str, path_type: str):
+    return perform_copy(path, path_bytes, identity_name, path_type)
+
 
 
 def copy_file(path: Path) -> Path | None:
@@ -216,9 +220,17 @@ def copy_file(path: Path) -> Path | None:
         return None
 
     path_type = get_file_type(path_str)
+    identity_name = generate_new_file_name(path)
 
-    return perform_copy(path, size, path_type)
+    # copies in bacground
+    async_copy(path, size, identity_name,path_type)
 
+    final_path = get_store_path(path_type)
+
+    if final_path is not None:
+        return final_path / identity_name
+    
+    return None 
 
 def save_as_text(path: Path) -> str | None:
     # fall back to text if copy failed and others failed
@@ -243,3 +255,5 @@ def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
         return None
 
     return dest_path
+
+
