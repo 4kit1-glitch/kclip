@@ -11,6 +11,10 @@ import hashlib
 from datetime import datetime
 from typing import ClassVar
 from pathlib import Path
+from pyperclip import copy, paste
+from PIL import ImageGrab, Image
+from typing import Any
+
 
 
 PROGRAM_PATH = __file__
@@ -161,3 +165,34 @@ class OtherClip(Clip):
     def __init__(self, clip_data: str, clip_type: str = "other", clip_path: Path | str | None = None, date_clipped: datetime | None = None, is_pinned: bool = False) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
         self.clip_name = f"[OTHER]{self.clip_path}"
+
+
+
+def read_from_image_grap():
+    """ returns value from grapclipboard() from PIL"""
+    return ImageGrab.grabclipboard()
+
+def read_from_pyperclip() -> str:
+    """returns output of paste() from pyperclip"""
+    return paste()
+
+
+def read_clipboard():
+    """ preforms read clipboard mechanism"""
+    if read_from_image_grap() is None:
+        return read_from_pyperclip()
+    return read_from_image_grap()
+
+
+def is_single_clip(copied: Image.Image | str | list[str]| None) -> bool:
+    """ function ensures that any multi clip is sent as txt"""
+    """ tests if what is in the clipboard is single
+        returns false if mutiple items where copied
+    """
+    if isinstance(copied, str):
+        listings = copied.split("\n")
+        return not len(listings) > 1
+    elif isinstance(copied, list):
+        return not len(copied) > 1
+    else:
+        return True
