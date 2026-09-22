@@ -16,7 +16,7 @@ def spawn_bg_proc(func, *args, **kwargs) -> threading.Thread | None:
     return t
 
 
-def run_in_backgroand(func):
+def run_in_background(func):
     """makes a function be able to run in background"""
 
     @functools.wraps(func)
