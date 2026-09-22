@@ -14,7 +14,7 @@ import sys
 import atexit
 import sqlite3
 from pathlib import Path
-from clipmanager import Clip, TextClip, AudioClip, ImageClip, VideoClip
+from clipmanager import Clip, TextClip, AudioClip, ImageClip, VideoClip, OtherClip
 
 
 APP_NAME = "kclip"
@@ -80,6 +80,7 @@ def create_db() -> None:
             clipType TEXT NOT NULL,
             clipPath TEXT,
             isPinned INTEGER NOT NULL,
+            clipData TEXT,
             dateClipped TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
     """)
@@ -103,6 +104,7 @@ def add_record(
     clip_type: str,
     is_pinned: bool,
     clip_path: Path | str | None = None,
+    clip_data: str | None = None
 ) -> None:
     """adds a record to database"""
     pinstatus = 1 if is_pinned else 0
@@ -111,8 +113,8 @@ def add_record(
     conn = get_connection()
 
     conn.execute(
-        "INSERT INTO clips (uniqueName, clipType, clipPath, isPinned) VALUES (?, ?, ?, ?)",
-        (unique_name, clip_type, path_value, pinstatus),
+        "INSERT INTO clips (uniqueName, clipType, clipPath, isPinned, clipData) VALUES (?, ?, ?, ?)",
+        (unique_name, clip_type, path_value, pinstatus, clip_data),
     )
     conn.commit()
 
@@ -155,9 +157,9 @@ def delete_record(clip_id: int) -> dict | None:
     return record
 
 
-def add_clip_to_db(clip: Clip | TextClip | AudioClip | ImageClip | VideoClip) -> None:
+def add_clip_to_db(clip: Clip | TextClip | AudioClip | ImageClip | VideoClip | OtherClip) -> None:
     """adds a clip object to the database"""
-    add_record(clip.get_unique_id(), clip.clip_type, clip.is_pinned, clip.clip_path)
+    add_record(clip.get_unique_id(), clip.clip_type, clip.is_pinned, clip.clip_path, clip.clip_data)
 
 
 def remove_clip_from_db(clip_id: int):
