@@ -96,6 +96,10 @@ class Clip:
             print(f"Failed to remove clip ID{unique_id}", file=sys.stderr)
         return unique_id
 
+    @classmethod
+    def remove_all_clips(cls) -> None:
+        cls.all_clips.clear()
+
 
 class TextClip(Clip):
     """specific class to text clips"""

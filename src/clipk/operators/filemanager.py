@@ -11,7 +11,7 @@ import sys
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from shutil import copy2
+from shutil import copy2, rmtree
 from PIL import Image
 
 from storeengine import get_data_dir, create_dir
@@ -269,3 +269,6 @@ def delete_file(clip_obj: Clip) ->  None:
     if isinstance(path, (str | Path)):
         Path(path).unlink(missing_ok=True)
     Clip.remove_clip(clip_obj.get_unique_id())
+
+def delete_all_files() -> None:
+    rmtree(get_data_dir(), ignore_errors=True)
