@@ -15,6 +15,7 @@ from shutil import copy2
 from PIL import Image
 
 from storeengine import get_data_dir, create_dir
+from clipmanager import Clip
 
 
 VIDEO_EXTS = {".mp4", ".mkv", ".gif", ".mov", ".avi", ".webm"}
@@ -150,6 +151,11 @@ def generate_new_file_name(path: Path) -> str:
     ]  # generate 8 chr filename
     return f"{timestamp}_{short_hash}{extension}"
 
+def generate_new_file_name2(path: Path, clip: Clip) -> str:
+    """ generates unique name for files so it matches with clip"""
+    extension = _get_ext(str(path))
+    unique_name = clip.get_unique_id()
+    return f"{unique_name}{extension}"
 
 def perform_copy(path: Path, path_bytes: int, path_type: str = "other") -> Path | None:
     """
