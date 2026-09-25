@@ -77,5 +77,90 @@ class ClipTui:
             # make sure doesnt crash if database is not set or querry fails
             records = []
             self.status = f"DB error: {e}"
-            
+
+        items = []
+        for idx, row in enumerate(records):
+            clip = _row_to_clip(row)
+            items.append({
+                "idx": idx, 
+                "id": row.get("clipId", 0),
+                "uid": str(row.get("uniqueName", "?"))[:10],
+                "date": str(row.get("dataClipped", ""))[:19],
+                "type": str(row.get("clipType"))[:8],
+                "pinned": bool(row.get("isPinned", 0)),
+                "clip": clip
+            })
+
+        self.items = items
+
+        if self.selected_idx >= len(self.items):
+            self.selected_idx = max(0, len(self.items))
+
+
+    def draw(self):
+        # full frame
+        self.stdscr.erase()
+        self._draw_header()
+        self._draw_list()
+        self._draw_footer()
+        self.stdscr.refresh()
+
+    def _draw_header(self):
+        """ draws headers"""
+        _max_y, max_x = self.stdscr.getmaxyx()
+        headers = [("ID", 5), ("UID", 12), ("Date", 20), ("Type", 8), ("Pin", 4)]
+        x = 0
+        for text, width in headers:
+            if x >= max_x: # guard against narrow terminals
+                break
+            self.stdscr.addstr(0, x, text.ljust(width)[:width], curses.color_pair(1) | curses.A_BOLD)
+        self.stdscr.addstr(1, 0, "-" * min(x, max_x -1))
+
+
+    def _draw_list(self) -> None:
+        """ draws list of clips"""
+        max_y, max_x = self.stdscr.getmaxyx()
+        body_top = 2
+        body_bottom = max_y - 2
+        view_height =body_bottom - body_top
+
+        # fallback when no items found
+        if not self.items:
+            self.stdscr.addstr(body_top, 0, "No clip saved.")
+            return 
+        for i in range(self.offset, min(len(self.items), self.offset + view_height)):
+            item = self.items[i]
+            y = body_top + (i - self.offset)
+
+            pin_mark = "*" if item["pinned"] else " "
+            row = (
+                f"{item['id']:<5}",
+                f"{item['uid']:<5}",
+                f"{item['date']:<5}",
+                f"{item['type']:<8}",
+                f"{pin_mark:<4}"
+            )[:max_x - 1]
+
+            if i == self.selected_idx:
+                self.stdscr.addstr(y, 0, row, curses.color_pair(2))
+            elif item["pinned"]:
+                self.stdscr.addstr(y, 0, row, curses.color_pair(3))
+            else:
+                self.stdscr.addstr(y, 0, row)
+
+
+    def _draw_footer(self):
+        """ draws tui footer"""
+        max_y, max_x = self.stdscr.getmaxyx()
+        text = self.status or "up/down(move) p (pin) d (delete) r (refresh) R (reset) q (quit)"
+        attr = curses.color_pair(4) if self.status else curses.A_DIM
+        self.stdscr.addstr(max_y - 1, 0, text[:max_x - 1], attr)
+
+    # handling input
+    def handle_key(self, key) -> bool:
+        """
+        Processes one key press
+        Returns False to quit
+        """
+        return True
 
