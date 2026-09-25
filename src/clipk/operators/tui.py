@@ -68,6 +68,20 @@ class ClipTui:
 
         self.reload() # this makes sure the db is read at each run instance
 
+
+        # add key bindings
+
+        self._KEY_BINDS = {
+            curses.KEY_DOWN: self._move_down,
+            ord("s"): self._move_down,
+            curses.KEY_UP: self._move_up,
+            ord("w"): self._move_up,
+            ord("r"): self._refresh,
+            ord("R"): self._do_reset,
+            ord("p"): self._do_pin,
+            ord("d"): self._do_delete
+        }
+
     def reload(self):
         """ Pulls records from database so as to composite screen"""
 
@@ -156,11 +170,107 @@ class ClipTui:
         attr = curses.color_pair(4) if self.status else curses.A_DIM
         self.stdscr.addstr(max_y - 1, 0, text[:max_x - 1], attr)
 
+
+    def _refresh(self):
+        self.reload()
+        self.status = "Refreshed."
+
     # handling input
     def handle_key(self, key) -> bool:
         """
         Processes one key press
         Returns False to quit
         """
+        if key == ord("q"):
+            return False
+
+        action = self._KEY_BINDS.get(key)
+
+        if action:
+            action()
+        else:
+            self.status = ""
         return True
+
+    # navigations
+    def _move_down(self):
+        if self.selected_idx < len(self.items) - 1:
+            self.selected_idx += 1
+            max_y, _ = self.stdscr.getmaxyx()
+            view_hieght = (max_y -2) - 2
+            if self.selected_idx - self.offset >= view_hieght:
+                self.offset = self.selected_idx - view_hieght + 1
+
+    def _move_up(self):
+        if self.selected_idx > 0:
+            self.selected_idx -= 1
+
+        if self.selected_idx < self.offset:
+            self.offset = self.selected_idx
+
+
+    # actions
+
+    def _current(self):
+        if not self.items:
+            return None
+        return self.items[self.selected_idx]["clip"]
+
+    def _do_pin(self):
+        clip = self._current()
+
+        if clip is None:
+            return
+
+        try:
+            item = self.items[self.selected_idx]
+            if item["pinned"]:
+                unpin(clip)
+                item["pinned"] = False
+                item["clip"].is_pinned = False
+                self.status = "Unpinned."
+            else:
+                pin(clip)
+                item["pinned"] = True
+                item["clip"].is_pinned = True
+                self.status = "Pinned."
+        except (sqlite3.Error, ValueError, AttributeError) as e:
+            self.status = f"Pin failed {e}"
+
+    def _do_delete(self):
+        clip = self._current():
+        if clip is None:
+            return 
+
+        try:
+            delete(clip)
+            self.items.pop(self.selected_idx)
+            if self.selected_idx >= max(0, len(self.items)):
+                self.selected_idx = max(0, len(self.items) - 1)
+            self.status = "Deleted"
+        except (sqlite3.Error, OSError, AttributeError) as e:
+            self.status = f"Delete failed: {e}"
+
+
+    def _do_reset(self):
+        max_y, max_x = self.stdscr.getmaxyx()
+        self.stdscr.addstr(max_y - 1, 0, "Reset EVERYTHING (y/N)".ljust(max_x - 1), curses.color_pair(4))
+        self.stdscr.refresh()
+
+        prev_timeout = self.stdscr.timeout(-1)
+        _key = self.stdscr.getch()
+        self.stdscr.timeout(prev_timeout)
+
+        for _key in (ord("y"), ord("Y")):
+            try:
+                reset()
+                self.items = []
+                self.selected_idx = 0
+                self.offset = 0
+                self.status = "Reset complete"
+
+            except (sqlite3.Error, OSError, AttributeError) as e:
+                self.status = f"Reset failed: {e}"
+        else:
+            self.status = "Reset Cancelled"
 
