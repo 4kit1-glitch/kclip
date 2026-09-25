@@ -76,10 +76,10 @@ def create_db() -> None:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS clips (
             clipID INTEGER PRIMARY KEY AUTOINCREMENT,
-            uniqueName TEXT NOT NULL,
+            uniqueName TEXT NOT NULL DEFAULT "text",
             clipType TEXT NOT NULL,
             clipPath TEXT,
-            isPinned INTEGER NOT NULL,
+            isPinned INTEGER NOT NULL DEFAULT 0,
             clipData TEXT,
             dateClipped TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -99,6 +99,7 @@ def delete_db() -> None:
         db_path.with_suffix(".db-shm").unlink(missing_ok=True)
 
 
+
 def add_record(
     unique_name: str,
     clip_type: str,
@@ -113,7 +114,7 @@ def add_record(
     conn = get_connection()
 
     conn.execute(
-        "INSERT INTO clips (uniqueName, clipType, clipPath, isPinned, clipData) VALUES (?, ?, ?, ?)",
+        "INSERT INTO clips (uniqueName, clipType, clipPath, isPinned, clipData) VALUES (?, ?, ?, ?, ?)",
         (unique_name, clip_type, path_value, pinstatus, clip_data),
     )
     conn.commit()
@@ -142,6 +143,28 @@ def read_record(
 
     return dict(record)
 
+def update_pin(clip: Clip, clip_id: int | None = None) -> None:
+
+    if clip_id is None or clip_id == 0:
+        return None
+    pin_status = 1 if clip.is_pinned else 0
+    conn = get_connection()
+    conn.execute("UPDATE clips SET isPinned = ? WHERE clipID = ? ", (pin_status, clip_id))
+
+
+    conn.execute("UPDATE")
+def read_all_records() -> list[dict] | None:
+    conn = get_connection()
+
+    result = conn.execute("SELECT * FROM clips")
+
+    records = result.fetchall()
+
+    if not records:
+        return None
+
+    return [dict(r) for r in records]
+    
 
 def delete_record(clip_id: int) -> dict | None:
     """removes a record form database , returns the deleted record as dict"""
@@ -155,7 +178,6 @@ def delete_record(clip_id: int) -> dict | None:
     conn.commit()
 
     return record
-
 
 def add_clip_to_db(clip: Clip | TextClip | AudioClip | ImageClip | VideoClip | OtherClip) -> None:
     """adds a clip object to the database"""
@@ -183,3 +205,8 @@ def init() -> bool:
         print(f"[Error] failed to initialize : {e}", file=sys.stderr)
         _initialized = False
         return False
+
+
+if __name__ == "storeengine":
+    """ try to run init any time imported """
+    init()
