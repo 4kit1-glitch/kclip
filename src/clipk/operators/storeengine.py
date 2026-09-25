@@ -150,6 +150,7 @@ def update_pin(clip: Clip, clip_id: int | None = None) -> None:
     pin_status = 1 if clip.is_pinned else 0
     conn = get_connection()
     conn.execute("UPDATE clips SET isPinned = ? WHERE clipID = ? ", (pin_status, clip_id))
+    conn.commit()
 
 
     conn.execute("UPDATE")
