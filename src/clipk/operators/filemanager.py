@@ -7,16 +7,15 @@ file processor and storage module
 """
 
 import os
-import sys
 import hashlib
 from datetime import datetime
 from pathlib import Path
 from shutil import copy2, rmtree
 from PIL import Image
 
-from storeengine import get_data_dir, create_dir
-from clipmanager import Clip, TextClip, AudioClip, VideoClip, ImageClip, OtherClip
-from _bg_sync import run_in_background
+from .storeengine import get_data_dir, create_dir
+from .clipmanager import Clip, TextClip, AudioClip, VideoClip, ImageClip, OtherClip
+from ._bg_sync import run_in_background
 
 
 
@@ -26,7 +25,7 @@ AUDIO_EXTS = {".wav", ".m4a", ".mp3", ".aac"}
 
 MAX_COPY_SIZE = 100 * (1024**2)  # sets max copy size to 100Mb
 
-_most_recent_copy_path: Path | None = None
+MOST_RECENT_COPY_PATH: Path | None = None
 
 
 def get_store_path(clip_type: str) -> Path | None:
@@ -168,7 +167,7 @@ def perform_copy(path: Path, path_bytes: int, identity_name: str, path_type: str
     dest -> destination btw
 
     """
-    global _most_recent_copy_path
+    global MOST_RECENT_COPY_PATH
     # first i get destination folder
     dest_dir = get_store_path(path_type)
 
@@ -187,7 +186,7 @@ def perform_copy(path: Path, path_bytes: int, identity_name: str, path_type: str
     # then i perform copy
     try:
         copy2(path, dest_path)
-        _most_recent_copy_path = dest_path
+        MOST_RECENT_COPY_PATH = dest_path
     except (FileNotFoundError, OSError):
         return None
 
@@ -247,7 +246,7 @@ def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
     data_type = "img"
     dest_dir = get_store_path(data_type)
     identity = generate_new_file_name(Path("web_clip.png"))
-    global _most_recent_copy_path
+    global MOST_RECENT_COPY_PATH
     if dest_dir:
         dest_path = dest_dir / identity
     else:
@@ -256,7 +255,7 @@ def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
     try:
         create_dir(dest_dir)
         pil_image.save(dest_path)
-        _most_recent_copy_path = dest_path
+        MOST_RECENT_COPY_PATH = dest_path
     except OSError:
         return None
     
