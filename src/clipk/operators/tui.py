@@ -151,11 +151,11 @@ class ClipTui:
 
             pin_mark = "*" if item["pinned"] else " "
             row = (
-                f"{item['id']:<5}",
-                f"{item['uid']:<5}",
-                f"{item['date']:<5}",
-                f"{item['type']:<8}",
-                f"{pin_mark:<4}",
+                f"{item['id']:<5}"
+                f"{item['uid']:<5}"
+                f"{item['date']:<5}"
+                f"{item['type']:<8}"
+                f"{pin_mark:<4}"
             )[: max_x - 1]
 
             if i == self.selected_idx:
