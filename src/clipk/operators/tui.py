@@ -5,8 +5,9 @@ TUI  for kclip uses curses to draw scrollable table of clips stored in the datab
 
 import sqlite3
 import curses
-from .clipfile_link import see_saved, pin, unpin, delete, reset
-from .clipmanager import Clip, TextClip, AudioClip, VideoClip, OtherClip, ImageClip
+from PIL import Image
+from .clipfile_link import see_saved, pin, unpin, delete, reset, save
+from .clipmanager import Clip, TextClip, AudioClip, VideoClip, OtherClip, ImageClip, read_clipboard
 
 _CLIP_CLASSES = {
     "text": TextClip,
@@ -262,19 +263,74 @@ class ClipTui:
         )
         self.stdscr.refresh()
 
-        prev_timeout = self.stdscr.timeout(-1)
-        _key = self.stdscr.getch()
-        self.stdscr.timeout(prev_timeout)
+        key = self.stdscr.getch()
+        self.stdscr.timeout(POLL_MS)
 
-        for _key in (ord("y"), ord("Y")):
+        if key in (ord("y"), ord("Y")):
             try:
                 reset()
                 self.items = []
                 self.selected_idx = 0
                 self.offset = 0
                 self.status = "Reset complete"
-                break
             except (sqlite3.Error, OSError, AttributeError) as e:
                 self.status = f"Reset failed: {e}"
         else:
             self.status = "Reset Cancelled"
+
+
+POLL_MS = 300 # makes db refesh every ~300ms
+CLIP_CHECK_TIME = 3 # check clibords every  0.9 secs
+
+
+def _clipboard_signature(value):
+    if isinstance(value, str):
+        return ("str", value)
+    if isinstance(value, list):
+        return ("list", tuple(map(str, value)))
+    if isinstance(value, Image.Image):
+        return ("img", value.size, value.mode)
+    return ("other", repr(value))
+
+
+def _build_clip_for(value):
+    if isinstance(value, Image.Image):
+        return ImageClip(clip_data="")
+    return TextClip(clip_data="")
+
+
+def run_tui():
+    """ run the tui """
+    def _main(stdscr):
+        tui = ClipTui(stdscr)
+        stdscr.timeout(POLL_MS)
+
+        last_sig = _clipboard_signature(read_clipboard())
+        tick = 0
+        running = True
+
+        while running:
+            tick += 1
+
+            # clipboard watch (every N ticks)
+            if tick % CLIP_CHECK_TIME == 0:
+                try:
+                    current = read_clipboard()
+                    sig = _clipboard_signature(current)
+                    if sig != last_sig:
+                        save(_build_clip_for(current))
+                        last_sig = sig
+                except Exception: # never kill the TUI over a clipboard hiccup
+                    # catching all exceptions whatsoever
+                    pass  
+            # refresh + draw
+            tui.reload()
+            tui.draw()
+
+            # input
+            key = stdscr.getch()
+            if key == -1:
+                continue
+            running = tui.handle_key(key)
+
+    curses.wrapper(_main)
