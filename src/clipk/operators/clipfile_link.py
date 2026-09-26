@@ -1,21 +1,47 @@
+""" the link between the clip, database and file"""
+
+import shutil
+import subprocess
+import pyperclip
 from pathlib import Path
+
 from PIL import Image
-from .clipmanager import Clip, TextClip, ImageClip, AudioClip, OtherClip, VideoClip, read_clipboard, is_single_clip
-from .filemanager import MOST_RECENT_COPY_PATH, copy_file, delete_file, delete_all_files, copy_from_image_grap, is_safe_to_copy
-from .storeengine import add_clip_to_db, remove_clip_from_db, delete_db, read_all_records, update_pin
-from ._bg_sync import run_in_background
+
+from .clipmanager import (
+    Clip,
+    TextClip,
+    ImageClip,
+    AudioClip,
+    OtherClip,
+    VideoClip,
+    read_clipboard,
+    is_single_clip,
+)
+from .filemanager import (
+    copy_file,
+    delete_file,
+    delete_all_files,
+    copy_from_image_grap,
+    is_safe_to_copy,
+)
+from .storeengine import (
+    add_clip_to_db,
+    remove_clip_from_db,
+    delete_db,
+    read_all_records,
+    update_pin,
+)
 
 
-
-def save(clip: Clip |TextClip| ImageClip| AudioClip | OtherClip | VideoClip) -> None:
-    """ perform full save"""
+def save(clip: Clip | TextClip | ImageClip | AudioClip | OtherClip | VideoClip) -> None:
+    """perform full save"""
     current_clip = read_clipboard()
 
     if not is_single_clip(current_clip):
         clip.clip_data = str(current_clip)
         Clip.add_clip(clip)
         add_clip_to_db(clip)
-        return  None
+        return None
 
     if isinstance(current_clip, str):
         clip.clip_data = current_clip
@@ -33,10 +59,9 @@ def save(clip: Clip |TextClip| ImageClip| AudioClip | OtherClip | VideoClip) -> 
             data = "\n".join(current_clip)
             clip.clip_data = data
             add_clip_to_db(clip)
-        
-        
-            
-def see_saved() -> dict | None:
+
+
+def see_saved() -> list[dict] | None:
     return read_all_records()
 
 
@@ -44,16 +69,71 @@ def pin(clip: Clip):
     clip.is_pinned = True
     update_pin(clip, clip.clip_id)
 
+
 def delete(clip: Clip | TextClip | ImageClip | VideoClip | OtherClip | AudioClip) -> None:
     remove_clip_from_db(clip.clip_id)
     if clip.clip_path is not None:
         delete_file(clip)
-    
+
+
 def unpin(clip: Clip):
     clip.is_pinned = False
     update_pin(clip, clip.clip_id)
+
 
 def reset():
     Clip.remove_all_clips()
     delete_all_files()
     delete_db()
+
+
+def _copy_by_pyper(item: str) -> bool:
+    try:
+        pyperclip.copy(item)
+        return True
+    except pyperclip.PyperclipException:
+        return False
+
+
+
+def return_to_clipboard(clip: Clip) -> bool:
+    """
+    Put a saved clip back to the system clipboard.
+    -> text clips -> pyperclip.copy() as text
+    -> file clips -> uses xclip with text/uri-list
+
+    Returns true on success
+    """
+
+    typ = clip.clip_type # type
+    data = clip.clip_data
+    pth = clip.clip_path # path
+
+    if typ == "text":
+        if not clip.clip_data:
+            return False
+        return _copy_by_pyper(data)
+    
+
+    if not pth:
+        return False
+    
+    pth = Path(clip.clip_path if clip.clip_path is not None else "")
+
+    xclip = shutil.which("xclip")
+    if xclip is None:
+        return _copy_by_pyper(str(data))
+
+    uri = f"file://{pth.resolve()}\n"
+
+    try:
+        subprocess.run(
+            [xclip, "-selection", "clipboard", "-t", "text/uri-list", "-i"],
+            input=uri.encode(),
+            check=True
+        )
+        return True
+    except (subprocess.CalledProcessError, OSError):
+        return False
+    
+
