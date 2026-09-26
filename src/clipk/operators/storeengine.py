@@ -99,13 +99,12 @@ def delete_db() -> None:
         db_path.with_suffix(".db-shm").unlink(missing_ok=True)
 
 
-
 def add_record(
     unique_name: str,
     clip_type: str,
     is_pinned: bool,
     clip_path: Path | str | None = None,
-    clip_data: str | None = None
+    clip_data: str | None = None,
 ) -> None:
     """adds a record to database"""
     pinstatus = 1 if is_pinned else 0
@@ -114,15 +113,16 @@ def add_record(
     conn = get_connection()
 
     conn.execute(
-        "INSERT INTO clips (uniqueName, clipType, clipPath, isPinned, clipData) VALUES (?, ?, ?, ?, ?)",
+        """
+        INSERT INTO clips (uniqueName, clipType, clipPath, isPinned, clipData) 
+        VALUES (?, ?, ?, ?, ?)
+        """,
         (unique_name, clip_type, path_value, pinstatus, clip_data),
     )
     conn.commit()
 
 
-def read_record(
-    clip_id: int | None = None, unique_name: str | None = None
-) -> dict | None:
+def read_record(clip_id: int | None = None, unique_name: str | None = None) -> dict | None:
     """reads a specific record from database provided with either the clip_id or
     unique_name
     """
@@ -130,9 +130,7 @@ def read_record(
     if clip_id is not None:
         result = conn.execute(" SELECT * FROM clips WHERE clipID = ?", (clip_id,))
     elif unique_name is not None:
-        result = conn.execute(
-            " SELECT * FROM clips WHERE uniqueName = ?", (unique_name,)
-        )
+        result = conn.execute(" SELECT * FROM clips WHERE uniqueName = ?", (unique_name,))
     else:
         return None
 
@@ -143,17 +141,19 @@ def read_record(
 
     return dict(record)
 
+
 def update_pin(clip: Clip, clip_id: int | None = None) -> None:
 
     if clip_id is None or clip_id == 0:
-        return None
+        return
     pin_status = 1 if clip.is_pinned else 0
     conn = get_connection()
     conn.execute("UPDATE clips SET isPinned = ? WHERE clipID = ? ", (pin_status, clip_id))
     conn.commit()
 
-
     conn.execute("UPDATE")
+
+
 def read_all_records() -> list[dict] | None:
     conn = get_connection()
 
@@ -165,7 +165,7 @@ def read_all_records() -> list[dict] | None:
         return None
 
     return [dict(r) for r in records]
-    
+
 
 def delete_record(clip_id: int) -> dict | None:
     """removes a record form database , returns the deleted record as dict"""
@@ -180,9 +180,18 @@ def delete_record(clip_id: int) -> dict | None:
 
     return record
 
-def add_clip_to_db(clip: Clip | TextClip | AudioClip | ImageClip | VideoClip | OtherClip) -> None:
+
+def add_clip_to_db(
+    clip: Clip | TextClip | AudioClip | ImageClip | VideoClip | OtherClip,
+) -> None:
     """adds a clip object to the database"""
-    add_record(clip.get_unique_id(), clip.clip_type, clip.is_pinned, clip.clip_path, clip.clip_data)
+    add_record(
+        clip.get_unique_id(),
+        clip.clip_type,
+        clip.is_pinned,
+        clip.clip_path,
+        clip.clip_data,
+    )
 
 
 def remove_clip_from_db(clip_id: int):
