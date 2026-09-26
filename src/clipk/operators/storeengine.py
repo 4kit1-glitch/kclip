@@ -14,7 +14,7 @@ import sys
 import atexit
 import sqlite3
 from pathlib import Path
-from clipmanager import Clip, TextClip, AudioClip, ImageClip, VideoClip, OtherClip
+from .clipmanager import Clip, TextClip, AudioClip, ImageClip, VideoClip, OtherClip
 
 
 APP_NAME = "kclip"
