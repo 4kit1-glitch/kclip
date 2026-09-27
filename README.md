@@ -97,9 +97,7 @@ kclip
 ```
 
 This opens the interactive full-scre
-en table of saved clips.
-
-<img width="632" height="111" alt="image" src="https://github.com/user-attachments/assets/58687c48-10e5-42ac-bd80-06dc4f89be2c" />
+en table of saved clips
 
 ### Keyboard controls
 
@@ -136,7 +134,7 @@ Example output for `clipk list`:
    3  audio    *   [AUDIO]/home/user/.local/share/kclip/data/audios/...
 ```
 
-![kclip list output](docs/demo-list.png)
+<img width="632" height="111" alt="image" src="https://github.com/user-attachments/assets/58687c48-10e5-42ac-bd80-06dc4f89be2c" />
 
 ## How it works
 
