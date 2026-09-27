@@ -2,10 +2,14 @@ import threading
 import functools
 
 THREAD_LIMIT = 2
-_bg_threads = []
+_bg_threads : list[threading.Thread] = []
 
 
 def spawn_bg_proc(func, *args, **kwargs) -> threading.Thread | None:
+    # drop dead treads to free up slots
+
+    _bg_threads[:] = [t for t in _bg_threads if t.is_alive()]
+
     if len(_bg_threads) >= THREAD_LIMIT:
         print("max thread limit reached skipping")
         return None
