@@ -114,7 +114,7 @@ class TextClip(Clip):
     ) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
-        self.clip_name = self.clip_data[:15]
+        self.clip_name = self.clip_data[:5]
 
 
 class ImageClip(Clip):
@@ -130,7 +130,8 @@ class ImageClip(Clip):
     ) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
-        self.clip_name = f"[IMG]{self.clip_path}"
+        if self.clip_path is not None:
+            self.clip_name = f"[IMG]{Path(self.clip_path).stem}"
 
 
 class AudioClip(Clip):
@@ -146,7 +147,8 @@ class AudioClip(Clip):
     ) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
-        self.clip_name = f"[AUDIO]{self.clip_path}"
+        if self.clip_path is not None:
+            self.clip_name = f"[AUDIO]{self.clip_path}"
 
 
 class VideoClip(Clip):
@@ -162,7 +164,8 @@ class VideoClip(Clip):
     ) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
 
-        self.clip_name = f"[VIDEO]{self.clip_path}"
+        if self.clip_path is not None:
+            self.clip_name = f"[VIDEO]{Path(self.clip_path).stem}"
 
 
 class OtherClip(Clip):
@@ -175,7 +178,9 @@ class OtherClip(Clip):
         is_pinned: bool = False,
     ) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
-        self.clip_name = f"[OTHER]{self.clip_path}"
+        
+        if self.clip_path is not None:
+            self.clip_name = f"[OTHER]{Path(self.clip_path).stem}"
 
 
 def read_from_image_grap():
