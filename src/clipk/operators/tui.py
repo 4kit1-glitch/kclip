@@ -98,11 +98,10 @@ class ClipTui:
             clip = _row_to_clip(row)
             items.append(
                 {
-                    "idx": idx,
-                    "id": row.get("clipId", 0),
-                    "uid": str(row.get("uniqueName", "?"))[:10],
-                    "date": str(row.get("dataClipped", ""))[:19],
-                    "type": str(row.get("clipType"))[:8],
+                    "id": row.get("clipID", 0),
+                    "name": str(getattr(clip, "clip_name", "") or ""),
+                    "date": str(row.get("dateClipped", ""))[:19],
+                    "type": str(row.get("clipType") or "?")[:8],
                     "pinned": bool(row.get("isPinned", 0)),
                     "clip": clip,
                 }
@@ -111,7 +110,7 @@ class ClipTui:
         self.items = items
 
         if self.selected_idx >= len(self.items):
-            self.selected_idx = max(0, len(self.items))
+            self.selected_idx = max(0, len(self.items) - 1)
 
     def draw(self):
         # full frame
@@ -124,7 +123,7 @@ class ClipTui:
     def _draw_header(self):
         """draws headers"""
         _max_y, max_x = self.stdscr.getmaxyx()
-        headers = [("ID", 5), ("UID", 12), ("Date", 20), ("Type", 8), ("Pin", 4)]
+        headers = [("ID", 5), ("NAME", 30), ("Date", 20), ("Type", 8), ("Pin", 4)]
         x = 0
         for text, width in headers:
             if x >= max_x:  # guard against narrow terminals
@@ -150,10 +149,11 @@ class ClipTui:
             y = body_top + (i - self.offset)
 
             pin_mark = "*" if item["pinned"] else " "
+            name = item["name"][:30]
             row = (
                 f"{item['id']:<5}"
-                f"{item['uid']:<5}"
-                f"{item['date']:<5}"
+                f"{name:<30}"
+                f"{item['date']:<20}"
                 f"{item['type']:<8}"
                 f"{pin_mark:<4}"
             )[: max_x - 1]
