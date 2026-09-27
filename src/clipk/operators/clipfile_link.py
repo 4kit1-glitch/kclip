@@ -1,4 +1,5 @@
 """the link between the clip, database and file"""
+
 import os
 import shutil
 import subprocess
@@ -96,6 +97,7 @@ def _copy_by_pyper(item: str) -> bool:
     except pyperclip.PyperclipException:
         return False
 
+
 def return_to_clipboard(clip: Clip) -> bool:
     """
     Put a saved clip back on the system clipboard.
@@ -150,6 +152,3 @@ def return_to_clipboard(clip: Clip) -> bool:
             pass
 
     return _copy_by_pyper(str(path))
-    
-
-    
