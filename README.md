@@ -12,7 +12,14 @@ The project is packaged as a Python application and exposes a Typer-based CLI. T
 ---
 
 ### demo
-![kclip TUI](docs/demo-tui.png)
+<img width="400" height="400" alt="image" src="https://github.com/user-attachments/assets/31ad010e-2b68-44d4-97e5-5b3a7d867ccc" />  
+
+---
+
+<img width="1325" height="395" alt="image" src="https://github.com/user-attachments/assets/a2a3532e-62ef-4b99-9510-9aa0325174cb" />
+
+---
+
 
 ---
 ## Why this project exists
@@ -89,9 +96,10 @@ python -m clipk
 kclip
 ```
 
-This opens the interactive full-screen table of saved clips.
+This opens the interactive full-scre
+en table of saved clips.
 
-![kclip TUI with pinned clip](docs/demo-tui-pinned.png)
+<img width="632" height="111" alt="image" src="https://github.com/user-attachments/assets/58687c48-10e5-42ac-bd80-06dc4f89be2c" />
 
 ### Keyboard controls
 
