@@ -1,17 +1,22 @@
 import sys
 
 try:
-    from .operators import init
+    from .operators import init, wait
     from .operators.flagparser import app
 except ImportError:
-    from clipk.operators import init
+    from clipk.operators import init, wait
     from clipk.operators.flagparser import app
 
 
 def main() -> int:
+    
     init()  # idempotent test to check if req dirs and files are present
-    # also sets up the database
-    app()  # call back from run_tui + flag_parser
+
+    try:
+        app()
+
+    finally:
+        wait()
     return 0
 
 
