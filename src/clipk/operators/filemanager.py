@@ -18,7 +18,6 @@ from .clipmanager import Clip, TextClip, AudioClip, VideoClip, ImageClip, OtherC
 from ._bg_sync import run_in_background
 
 
-
 VIDEO_EXTS = {".mp4", ".mkv", ".gif", ".mov", ".avi", ".webm"}
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 AUDIO_EXTS = {".wav", ".m4a", ".mp3", ".aac"}
@@ -149,17 +148,24 @@ def generate_new_file_name(path: Path) -> str:
     """generate file names for moved files"""
     extension = _get_ext(str(path))
     timestamp = datetime.now().astimezone().strftime("%Y%m%d_%H_%M_%S")
-    short_hash = hashlib.md5(str(path).encode()).hexdigest()[:8]  # generate 8 chr filename
+    short_hash = hashlib.md5(str(path).encode()).hexdigest()[
+        :8
+    ]  # generate 8 chr filename
     return f"{timestamp}_{short_hash}{extension}"
 
-def generate_new_file_name2(path: Path, clip: Clip | TextClip | AudioClip | VideoClip | ImageClip | OtherClip) -> str:
-    """ generates unique name for files so it matches with clip"""
+
+def generate_new_file_name2(
+    path: Path, clip: Clip | TextClip | AudioClip | VideoClip | ImageClip | OtherClip
+) -> str:
+    """generates unique name for files so it matches with clip"""
     extension = _get_ext(str(path))
     unique_name = clip.get_unique_id()
     return f"{unique_name}{extension}"
 
 
-def perform_copy(path: Path, path_bytes: int, identity_name: str, path_type: str = "other") -> Path | None:
+def perform_copy(
+    path: Path, path_bytes: int, identity_name: str, path_type: str = "other"
+) -> Path | None:
     """
     actual copy proceedings return the destination path
     returns none if no copy was performed
@@ -190,15 +196,12 @@ def perform_copy(path: Path, path_bytes: int, identity_name: str, path_type: str
     except (FileNotFoundError, OSError):
         return None
 
-    
-
     return dest_path
 
 
 @run_in_background
 def async_copy(path: Path, path_bytes: int, identity_name: str, path_type: str):
     return perform_copy(path, path_bytes, identity_name, path_type)
-
 
 
 def copy_file(path: Path, clip_obj: Clip) -> Path | None:
@@ -227,14 +230,15 @@ def copy_file(path: Path, clip_obj: Clip) -> Path | None:
     identity_name = generate_new_file_name2(path, clip_obj)
 
     # copies in bacground
-    async_copy(path, size, identity_name,path_type)
+    async_copy(path, size, identity_name, path_type)
 
     final_path = get_store_path(path_type)
 
     if final_path is not None:
         return final_path / identity_name
-    
-    return None 
+
+    return None
+
 
 def save_as_text(path: Path, clip_obj: Clip) -> str | None:
     # fall back to text if copy failed and others failed
@@ -258,16 +262,17 @@ def copy_from_image_grap(pil_image: Image.Image) -> Path | None:
         MOST_RECENT_COPY_PATH = dest_path
     except OSError:
         return None
-    
+
     return dest_path
 
 
-def delete_file(clip_obj: Clip) ->  None:
+def delete_file(clip_obj: Clip) -> None:
     path = clip_obj.clip_path
 
     if isinstance(path, (str | Path)):
         Path(path).unlink(missing_ok=True)
     Clip.remove_clip(clip_obj.get_unique_id())
+
 
 def delete_all_files() -> None:
     rmtree(get_data_dir(), ignore_errors=True)

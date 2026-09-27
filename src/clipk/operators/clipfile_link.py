@@ -1,4 +1,4 @@
-""" the link between the clip, database and file"""
+"""the link between the clip, database and file"""
 
 import shutil
 import subprocess
@@ -70,7 +70,9 @@ def pin(clip: Clip):
     update_pin(clip, clip.clip_id)
 
 
-def delete(clip: Clip | TextClip | ImageClip | VideoClip | OtherClip | AudioClip) -> None:
+def delete(
+    clip: Clip | TextClip | ImageClip | VideoClip | OtherClip | AudioClip,
+) -> None:
     remove_clip_from_db(clip.clip_id)
     if clip.clip_path is not None:
         delete_file(clip)
@@ -95,7 +97,6 @@ def _copy_by_pyper(item: str) -> bool:
         return False
 
 
-
 def return_to_clipboard(clip: Clip) -> bool:
     """
     Put a saved clip back to the system clipboard.
@@ -105,19 +106,18 @@ def return_to_clipboard(clip: Clip) -> bool:
     Returns true on success
     """
 
-    typ = clip.clip_type # type
+    typ = clip.clip_type  # type
     data = clip.clip_data
-    pth = clip.clip_path # path
+    pth = clip.clip_path  # path
 
     if typ == "text":
         if not clip.clip_data:
             return False
         return _copy_by_pyper(data)
-    
 
     if not pth:
         return False
-    
+
     pth = Path(clip.clip_path if clip.clip_path is not None else "")
 
     xclip = shutil.which("xclip")
@@ -130,10 +130,8 @@ def return_to_clipboard(clip: Clip) -> bool:
         subprocess.run(
             [xclip, "-selection", "clipboard", "-t", "text/uri-list", "-i"],
             input=uri.encode(),
-            check=True
+            check=True,
         )
         return True
     except (subprocess.CalledProcessError, OSError):
         return False
-    
-

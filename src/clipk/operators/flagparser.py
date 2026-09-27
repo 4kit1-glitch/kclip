@@ -1,4 +1,4 @@
-""" flag parser script"""
+"""flag parser script"""
 
 import typer
 
@@ -15,8 +15,9 @@ app = typer.Typer(
     add_completion=True,
     no_args_is_help=False,
     rich_markup_mode="markdown",
-    context_settings={"help_option_names": ["-h", "--help"]}
+    context_settings={"help_option_names": ["-h", "--help"]},
 )
+
 
 def _version_callback(value: bool):
     if value:
@@ -32,6 +33,7 @@ app = typer.Typer(
     rich_markup_mode="markdown",
     context_settings={"help_option_names": ["-h", "--help"]},
 )
+
 
 def _return_nth_to_clipboard(n: int) -> None:
     """Restore the Nth saved clip (1 = oldest) to the system clipboard."""
@@ -49,37 +51,44 @@ def _return_nth_to_clipboard(n: int) -> None:
 
     if not return_to_clipboard(clip):
         typer.echo(
-            f"Could not restore clip #{n} ({clip.clip_type}). "
-            "Is xclip installed?"
+            f"Could not restore clip #{n} ({clip.clip_type}). Is xclip installed?"
         )
         raise typer.Exit(code=1)
 
     typer.echo(f"Restored clip #{n} ({clip.clip_type}) to clipboard.")
 
 
-
-
 @app.callback(invoke_without_command=True)
 def _root(
     ctx: typer.Context,
     version: bool = typer.Option(
-        False, "--version", "-v",
-        callback=_version_callback, is_eager=True,
+        False,
+        "--version",
+        "-v",
+        callback=_version_callback,
+        is_eager=True,
         help="Show version and exit.",
     ),
     mouse: bool = typer.Option(
-        False, "--mouse", "-m",
+        False,
+        "--mouse",
+        "-m",
         help="Enable mouse support (not implemented yet).",
     ),
     do_reset: bool = typer.Option(
-        False, "--reset", "-r",
+        False,
+        "--reset",
+        "-r",
         help="Delete all clips, files, and the database.",
     ),
     do_return: int = typer.Option(
-        0, "--return", "-n",
-        min=0, max=10,
+        0,
+        "--return",
+        "-n",
+        min=0,
+        max=10,
         help="Restore the Nth saved clip (1=oldest, 10=newest) to the "
-             "clipboard. 0 means 'not requested'.",
+        "clipboard. 0 means 'not requested'.",
     ),
 ):
     """kclip — launch the TUI, or use one of the flags below."""

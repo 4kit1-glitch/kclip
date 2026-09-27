@@ -122,7 +122,9 @@ def add_record(
     conn.commit()
 
 
-def read_record(clip_id: int | None = None, unique_name: str | None = None) -> dict | None:
+def read_record(
+    clip_id: int | None = None, unique_name: str | None = None
+) -> dict | None:
     """reads a specific record from database provided with either the clip_id or
     unique_name
     """
@@ -130,7 +132,9 @@ def read_record(clip_id: int | None = None, unique_name: str | None = None) -> d
     if clip_id is not None:
         result = conn.execute(" SELECT * FROM clips WHERE clipID = ?", (clip_id,))
     elif unique_name is not None:
-        result = conn.execute(" SELECT * FROM clips WHERE uniqueName = ?", (unique_name,))
+        result = conn.execute(
+            " SELECT * FROM clips WHERE uniqueName = ?", (unique_name,)
+        )
     else:
         return None
 
@@ -148,7 +152,9 @@ def update_pin(clip: Clip, clip_id: int | None = None) -> None:
         return
     pin_status = 1 if clip.is_pinned else 0
     conn = get_connection()
-    conn.execute("UPDATE clips SET isPinned = ? WHERE clipID = ? ", (pin_status, clip_id))
+    conn.execute(
+        "UPDATE clips SET isPinned = ? WHERE clipID = ? ", (pin_status, clip_id)
+    )
     conn.commit()
 
     conn.execute("UPDATE")

@@ -11,9 +11,8 @@ import hashlib
 from datetime import datetime
 from typing import ClassVar
 from pathlib import Path
-from pyperclip import copy, paste
+from pyperclip import paste
 from PIL import ImageGrab, Image
-
 
 
 PROGRAM_PATH = __file__
@@ -34,8 +33,9 @@ class Clip:
         clip_path: Path | str | None = None,
         date_clipped: datetime | None = None,
         is_pinned: bool = False,
+        clip_id: int = 0,
     ) -> None:
-
+        self.clip_id = clip_id
         self.clip_type = clip_type
         self.clip_path = clip_path
         self.date_clipped = date_clipped
@@ -164,16 +164,24 @@ class VideoClip(Clip):
 
         self.clip_name = f"[VIDEO]{self.clip_path}"
 
+
 class OtherClip(Clip):
-    def __init__(self, clip_data: str, clip_type: str = "other", clip_path: Path | str | None = None, date_clipped: datetime | None = None, is_pinned: bool = False) -> None:
+    def __init__(
+        self,
+        clip_data: str,
+        clip_type: str = "other",
+        clip_path: Path | str | None = None,
+        date_clipped: datetime | None = None,
+        is_pinned: bool = False,
+    ) -> None:
         super().__init__(clip_data, clip_type, clip_path, date_clipped, is_pinned)
         self.clip_name = f"[OTHER]{self.clip_path}"
 
 
-
 def read_from_image_grap():
-    """ returns value from grapclipboard() from PIL"""
+    """returns value from grapclipboard() from PIL"""
     return ImageGrab.grabclipboard()
+
 
 def read_from_pyperclip() -> str:
     """returns output of paste() from pyperclip"""
@@ -181,16 +189,16 @@ def read_from_pyperclip() -> str:
 
 
 def read_clipboard():
-    """ preforms read clipboard mechanism"""
+    """preforms read clipboard mechanism"""
     if read_from_image_grap() is None:
         return read_from_pyperclip()
     return read_from_image_grap()
 
 
-def is_single_clip(copied: Image.Image | str | list[str]| None) -> bool:
-    """ function ensures that any multi clip is sent as txt"""
-    """ tests if what is in the clipboard is single
-        returns false if mutiple items where copied
+def is_single_clip(copied: Image.Image | str | list[str] | None) -> bool:
+    """function ensures that any multi clip is sent as txt
+    tests if what is in the clipboard is single
+    returns false if mutiple items where copied
     """
     if isinstance(copied, str):
         listings = copied.split("\n")
