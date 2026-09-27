@@ -1,5 +1,5 @@
 """the link between the clip, database and file"""
-
+import os
 import shutil
 import subprocess
 import pyperclip
@@ -96,42 +96,60 @@ def _copy_by_pyper(item: str) -> bool:
     except pyperclip.PyperclipException:
         return False
 
-
 def return_to_clipboard(clip: Clip) -> bool:
     """
-    Put a saved clip back to the system clipboard.
-    -> text clips -> pyperclip.copy() as text
-    -> file clips -> uses xclip with text/uri-list
-
-    Returns true on success
+    Put a saved clip back on the system clipboard.
+    - text clips  -> pyperclip
+    - file clips  -> wl-copy on Wayland, xclip on X11, path-as-text as last resort
     """
-
-    typ = clip.clip_type  # type
+    typ = clip.clip_type
     data = clip.clip_data
-    pth = clip.clip_path  # path
+    pth = clip.clip_path
 
+    # --- text -------------------------------------------------------
     if typ == "text":
-        if not clip.clip_data:
+        if not data:
             return False
         return _copy_by_pyper(data)
 
+    # --- file clips need a path -------------------------------------
     if not pth:
         return False
 
-    pth = Path(clip.clip_path if clip.clip_path is not None else "")
+    path = Path(pth)
+    if not path.exists():
+        return False
+
+    uri = f"file://{path.resolve()}\n"
+
+    session = os.environ.get("XDG_SESSION_TYPE", "").lower()
+
+    if session == "wayland":
+        wl_copy = shutil.which("wl-copy")
+        if wl_copy is not None:
+            try:
+                subprocess.run(
+                    [wl_copy, "--type", "text/uri-list"],
+                    input=uri.encode(),
+                    check=True,
+                )
+                return True
+            except (subprocess.CalledProcessError, OSError):
+                pass
 
     xclip = shutil.which("xclip")
-    if xclip is None:
-        return _copy_by_pyper(str(data))
+    if xclip is not None:
+        try:
+            subprocess.run(
+                [xclip, "-selection", "clipboard", "-t", "text/uri-list", "-i"],
+                input=uri.encode(),
+                check=True,
+            )
+            return True
+        except (subprocess.CalledProcessError, OSError):
+            pass
 
-    uri = f"file://{pth.resolve()}\n"
+    return _copy_by_pyper(str(path))
+    
 
-    try:
-        subprocess.run(
-            [xclip, "-selection", "clipboard", "-t", "text/uri-list", "-i"],
-            input=uri.encode(),
-            check=True,
-        )
-        return True
-    except (subprocess.CalledProcessError, OSError):
-        return False
+    
